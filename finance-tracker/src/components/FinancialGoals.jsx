@@ -13,6 +13,7 @@ import {
   getGoalCategoryIcon,
   getGoalPriorityColor
 } from '../lib/goalsEngine'
+import { getExtraGoalSlots } from '../lib/boostSystem'
 import { format } from 'date-fns'
 
 export default function FinancialGoals({ income, expenses }) {
@@ -23,10 +24,17 @@ export default function FinancialGoals({ income, expenses }) {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [selectedGoal, setSelectedGoal] = useState(null)
   const [showRecommendations, setShowRecommendations] = useState(false)
+  const [maxGoals, setMaxGoals] = useState(3)
 
   useEffect(() => {
     loadGoals()
+    loadMaxGoals()
   }, [user])
+
+  async function loadMaxGoals() {
+    const extraSlots = await getExtraGoalSlots(user.id)
+    setMaxGoals(3 + extraSlots) // Base 3 + purchased slots
+  }
 
   async function loadGoals() {
     try {

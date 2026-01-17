@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
-import { User, Edit2, Save, X, Mail, Calendar, Trophy, TrendingUp, Camera, Trash2, Upload } from 'lucide-react'
+import { User, Edit2, Save, X, Mail, Calendar, Trophy, TrendingUp, Camera, Trash2, Upload, Sparkles } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useTheme } from '../contexts/ThemeContext'
 import { format } from 'date-fns'
 
 export default function UserProfile() {
   const { user } = useAuth()
   const { t } = useLanguage()
+  const { equippedFrame, equippedBadge, equippedTitle, currentTheme } = useTheme()
   const [userStats, setUserStats] = useState(null)
   const [isEditing, setIsEditing] = useState(false)
   const [username, setUsername] = useState('')
@@ -234,7 +236,15 @@ export default function UserProfile() {
           <div className="flex flex-col sm:flex-row items-center gap-6">
             {/* Avatar Display */}
             <div className="relative">
-              <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-indigo-200 shadow-lg bg-gradient-to-br from-indigo-100 to-purple-100">
+              <div 
+                className="w-32 h-32 rounded-full overflow-hidden shadow-lg bg-gradient-to-br from-indigo-100 to-purple-100"
+                style={{
+                  borderWidth: '4px',
+                  borderStyle: 'solid',
+                  borderColor: equippedFrame?.color || '#C7D2FE',
+                  boxShadow: equippedFrame ? `0 0 20px ${equippedFrame.color}40` : undefined
+                }}
+              >
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
@@ -247,6 +257,11 @@ export default function UserProfile() {
                   </div>
                 )}
               </div>
+              {equippedFrame && (
+                <div className="absolute -top-1 -right-1 text-2xl" title={equippedFrame.frame}>
+                  {equippedFrame.frame === 'gold' ? '👑' : equippedFrame.frame === 'diamond' ? '💎' : '✨'}
+                </div>
+              )}
               {avatarUrl && (
                 <button
                   onClick={handleDeleteAvatar}
@@ -291,6 +306,46 @@ export default function UserProfile() {
             </div>
           </div>
         </div>
+
+        {/* Equipped Items Display */}
+        {(equippedTitle || equippedBadge || currentTheme.name !== 'Default') && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 sm:p-6 shadow-sm border-2 border-purple-200 lg:col-span-2">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+              <Sparkles className="w-5 h-5 text-purple-600" />
+              <span>{t('equippedItems')}</span>
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {equippedTitle && (
+                <div className="bg-white rounded-lg p-3 border border-purple-200">
+                  <p className="text-xs text-gray-600 mb-1">{t('title')}</p>
+                  <p className="font-bold" style={{ color: equippedTitle.color || '#8B5CF6' }}>
+                    {equippedTitle.title}
+                  </p>
+                </div>
+              )}
+              {equippedBadge && (
+                <div className="bg-white rounded-lg p-3 border border-purple-200">
+                  <p className="text-xs text-gray-600 mb-1">{t('badge')}</p>
+                  <p className="font-bold" style={{ color: equippedBadge.color || '#F59E0B' }}>
+                    {equippedBadge.title}
+                  </p>
+                </div>
+              )}
+              {currentTheme.name !== 'Default' && (
+                <div className="bg-white rounded-lg p-3 border border-purple-200">
+                  <p className="text-xs text-gray-600 mb-1">{t('activeTheme')}</p>
+                  <div className="flex items-center space-x-2">
+                    <div 
+                      className="w-6 h-6 rounded-full border-2 border-gray-300"
+                      style={{ background: `linear-gradient(135deg, ${currentTheme.colors.primary}, ${currentTheme.colors.secondary})` }}
+                    />
+                    <p className="font-bold text-gray-900">{currentTheme.name}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Username Section */}
         <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">

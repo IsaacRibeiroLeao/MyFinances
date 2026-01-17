@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { getPointMultiplier, hasStreakProtection, useStreakProtection } from './boostSystem'
 
 // Calculate points based on financial performance
 export function calculateMonthlyPoints(income, expenses, previousMonth = null) {
@@ -194,7 +195,11 @@ export async function updateMonthlyPerformance(userId, expenses, income) {
       .limit(1)
 
     const previousMonth = previousMonths?.[0]
-    const points = calculateMonthlyPoints(totalIncome, totalExpenses, previousMonth)
+    let points = calculateMonthlyPoints(totalIncome, totalExpenses, previousMonth)
+    
+    // Apply boost multiplier
+    const multiplier = await getPointMultiplier(userId)
+    points = Math.floor(points * multiplier)
 
     // Upsert monthly performance
     await supabase

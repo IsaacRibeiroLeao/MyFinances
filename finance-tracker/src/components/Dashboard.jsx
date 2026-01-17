@@ -13,6 +13,10 @@ import Leaderboard from './Leaderboard'
 import Achievements from './Achievements'
 import FinancialGoals from './FinancialGoals'
 import UserProfile from './UserProfile'
+import PointsShop from './PointsShop'
+import LevelInfo from './LevelInfo'
+import Inventory from './Inventory'
+import ActiveBoosts from './ActiveBoosts'
 import { LogOut, TrendingDown, TrendingUp, DollarSign, Wallet, Globe } from 'lucide-react'
 import { format } from 'date-fns'
 import { initializeUserStats, updateMonthlyPerformance, checkAchievements, unlockAchievement } from '../lib/gamification'
@@ -26,6 +30,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('expenses')
   const [newAchievements, setNewAchievements] = useState([])
+  const [userStats, setUserStats] = useState(null)
 
   useEffect(() => {
     if (!user) {
@@ -44,6 +49,22 @@ export default function Dashboard() {
 
   async function initializeGamification() {
     await initializeUserStats(user.id)
+    await loadUserStats()
+  }
+
+  async function loadUserStats() {
+    try {
+      const { data, error } = await supabase
+        .from('user_stats')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+      
+      if (error && error.code !== 'PGRST116') throw error
+      if (data) setUserStats(data)
+    } catch (error) {
+      console.error('Error loading user stats:', error)
+    }
   }
 
   async function updateGamification() {
@@ -308,6 +329,16 @@ export default function Dashboard() {
             >
               <span className="text-sm sm:text-base">👤 {t('profile')}</span>
             </button>
+            <button
+              onClick={() => setActiveTab('shop')}
+              className={`flex-shrink-0 px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-semibold transition-all ${
+                activeTab === 'shop'
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg scale-105'
+                  : 'bg-white text-gray-700 hover:bg-gray-50 shadow-sm'
+              }`}
+            >
+              <span className="text-sm sm:text-base">🛍️ {t('shop')}</span>
+            </button>
           </div>
         </div>
 
@@ -353,9 +384,28 @@ export default function Dashboard() {
           </div>
         )}
 
+        {activeTab === 'gamification' && (
+          <div className="space-y-6">
+            <ActiveBoosts />
+            <GamificationStatus />
+            <Leaderboard />
+            <Achievements />
+          </div>
+        )}
+
         {activeTab === 'profile' && (
-          <div>
+          <div className="space-y-6">
             <UserProfile />
+            <Inventory />
+          </div>
+        )}
+
+        {activeTab === 'shop' && (
+          <div className="space-y-6">
+            {userStats && (
+              <LevelInfo userPoints={userStats.total_points || 0} userLevel={userStats.level || 1} />
+            )}
+            <PointsShop />
           </div>
         )}
 
